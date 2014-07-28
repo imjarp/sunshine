@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Sunshine</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="refresh_button">Refresh</string>
+    <string name="title_activity_detail">DetailActivity</string>
+    <string name="action_map">map</string>
+    <string name ="title_share">share</string>
+    
+    <!--Preferences String-->
+    <string name="pref_location_key">Location</string>
+    <string name="pref_location_label">Location</string>
+    <string name="pref_location_default">Mexico,54054</string>
+
+
+    <!--Preference Temperature-->
+    <string name="pref_temperature_key">Temperature</string>
+    <string name="pref_temperature_label">Temp</string>
+    <string name="pref_temperature_default">Metric</string>
+
+
+    <string-array name="Temperature_Units_Entries">
+        <item>@string/Metric</item>
+        <item>@string/Imperial</item>
+    </string-array>
+    <string-array name="Temperature_Units_Values">
+        <item>@string/Metric</item>
+        <item>@string/Imperial</item>
+    </string-array>
+
+    <string name="Metric">Metric</string>
+    <string name="Imperial">Imperial</string>
+    
+
+</resources>
