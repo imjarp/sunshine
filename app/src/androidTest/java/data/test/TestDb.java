@@ -30,6 +30,7 @@ public class TestDb extends AndroidTestCase {
 
         database.close();
 
+
     }
 
     public void testInsertReadDb() {
