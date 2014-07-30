@@ -6,9 +6,15 @@ package com.example.jarp.sunshine;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
+import android.support.v4.widget.SimpleCursorAdapter;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -18,7 +24,10 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import com.example.jarp.sunshine.data.WeatherContract;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -33,10 +42,41 @@ import java.util.List;
 /**
  * A placeholder fragment containing a simple view.
  */
-public  class ForecastFragment extends Fragment {
+public  class ForecastFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>{
+
+    private String mLocation;
+
+    private final static int FORECAST_LOADER=0;
+    // For the forecast view we're showing only a small subset of the stored data.
+// Specify the columns we need.
+    private static final String[] FORECAST_COLUMNS = {
+// In this case the id needs to be fully qualified with a table name, since
+// the content provider joins the location & weather tables in the background
+// (both have an _id column)
+// On the one hand, that's annoying. On the other, you can search the weather table
+// using the location set by the user, which is only in the Location table.
+// So the convenience is worth it.
+            WeatherContract.WeatherEntry.TABLE_NAME + "." + WeatherContract.WeatherEntry._ID,
+            WeatherContract.WeatherEntry.COLUMN_DATETEXT,
+            WeatherContract.WeatherEntry.COLUMN_SHORT_DESC,
+            WeatherContract.WeatherEntry.COLUMN_MAX_TEMP,
+            WeatherContract.WeatherEntry.COLUMN_MIN_TEMP,
+            WeatherContract.LocationEntry.COLUMN_LOCATION_SETTING
+    };
+
+    // These indices are tied to FORECAST_COLUMNS. If FORECAST_COLUMNS changes, these
+// must change.
+    public static final int COL_WEATHER_ID = 0;
+    public static final int COL_WEATHER_DATE = 1;
+    public static final int COL_WEATHER_DESC = 2;
+    public static final int COL_WEATHER_MAX_TEMP = 3;
+    public static final int COL_WEATHER_MIN_TEMP = 4;
+    public static final int COL_LOCATION_SETTING = 5;
 
     private String name;
-    public ArrayAdapter<String> mForecastAdapter;
+    //public ArrayAdapter<String> mForecastAdapter;
+
+    public SimpleCursorAdapter mForecastAdapter;
 
     public ForecastFragment() {
     }
@@ -56,8 +96,50 @@ public  class ForecastFragment extends Fragment {
 
         List<String> weekForeCast = new ArrayList<String>(Arrays.asList(forecastDay));
 
+        //new ArrayAdapter<String>(getActivity(),R.layout.list_item_forecast,R.id.list_item_forecast_textview,weekForeCast);
+        // The SimpleCursorAdapter will take data from the database through the
+        // Loader and use it to populate the ListView it's attached to.
+        mForecastAdapter = new SimpleCursorAdapter(
+                getActivity(),
+                R.layout.list_item_forecast,
+                null,
+                // the column names to use to fill the textviews
+                new String[]{WeatherContract.WeatherEntry.COLUMN_DATETEXT,
+                        WeatherContract.WeatherEntry.COLUMN_SHORT_DESC,
+                        WeatherContract.WeatherEntry.COLUMN_MAX_TEMP,
+                        WeatherContract.WeatherEntry.COLUMN_MIN_TEMP
+                },
+                // the textviews to fill with the data pulled from the columns above
+                new int[]{R.id.list_item_date_textview,
+                        R.id.list_item_forecast_textview,
+                        R.id.list_item_high_textview,
+                        R.id.list_item_low_textview
+                },
+                0
+        );
 
-        mForecastAdapter = new ArrayAdapter<String>(getActivity(),R.layout.list_item_forecast,R.id.list_item_forecast_textview,weekForeCast);
+        mForecastAdapter.setViewBinder(new SimpleCursorAdapter.ViewBinder() {
+            @Override
+            public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
+                boolean isMetric = Utility.isMetric(getActivity());
+                switch (columnIndex) {
+                    case COL_WEATHER_MAX_TEMP:
+                    case COL_WEATHER_MIN_TEMP: {
+                    // we have to do some formatting and possibly a conversion
+                        ((TextView) view).setText(Utility.formatTemperature(
+                                cursor.getDouble(columnIndex), isMetric));
+                        return true;
+                    }
+                    case COL_WEATHER_DATE: {
+                        String dateString = cursor.getString(columnIndex);
+                        TextView dateView = (TextView) view;
+                        dateView.setText(Utility.formatDate(dateString));
+                        return true;
+                    }
+                }
+                return false;
+            }
+        });
 
         ListView mListForeCast = (ListView) rootView.findViewById(R.id.listview_forecast);
 
@@ -66,14 +148,20 @@ public  class ForecastFragment extends Fragment {
         mListForeCast.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                //Toast.makeText(getActivity(),"onItemClick",Toast.LENGTH_SHORT).show();
-                String f = mForecastAdapter.getItem(i);
+                /*Toast.makeText(getActivity(),"onItemClick",Toast.LENGTH_SHORT).show();
+
                 Intent intent  = new Intent(getActivity(),DetailActivity.class).putExtra(Intent.EXTRA_TEXT,f);
-                startActivity(intent);
+                startActivity(intent);*/
             }
         });
 
         return rootView;
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        getLoaderManager().initLoader(FORECAST_LOADER,null,this);
     }
 
     @Override
@@ -106,7 +194,7 @@ public  class ForecastFragment extends Fragment {
     private void updateWeather() {
 
         String location = Utility.getPreferredLocation(getActivity());
-        new FetchWeatherTask(getActivity(), mForecastAdapter).execute(location);
+        new FetchWeatherTask(getActivity()).execute(location);
     }
 
 
@@ -203,4 +291,41 @@ public  class ForecastFragment extends Fragment {
 
         return resultStrs;
     }
+
+
+    @Override
+    public Loader<Cursor> onCreateLoader(int id, Bundle args) {
+        // Only return data after today.
+        String startDate = WeatherContract.getDbDateString(new Date());
+
+// Sort order: Ascending, by date.
+        String sortOrder = WeatherContract.WeatherEntry.COLUMN_DATETEXT + " ASC";
+
+        mLocation = Utility.getPreferredLocation(getActivity());
+        Uri weatherForLocationUri = WeatherContract.WeatherEntry.buildWeatherLocationWithStartDate(
+                mLocation, startDate);
+
+        // Now create and return a CursorLoader that will take care of
+        // creating a Cursor for the data being displayed.
+                return new CursorLoader(
+                        getActivity(),
+                        weatherForLocationUri,
+                        FORECAST_COLUMNS,
+                        null,
+                        null,
+                        sortOrder
+                );
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        mForecastAdapter.swapCursor(data);
+    }
+
+    @Override
+    public void onLoaderReset(Loader<Cursor> loader) {
+        mForecastAdapter.swapCursor(null);
+    }
+
+
 }

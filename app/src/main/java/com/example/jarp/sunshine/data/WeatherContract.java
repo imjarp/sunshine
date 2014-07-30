@@ -1,6 +1,7 @@
 package com.example.jarp.sunshine.data;
 
 import android.content.ContentUris;
+import android.net.ParseException;
 import android.net.Uri;
 import android.provider.BaseColumns;
 
@@ -25,6 +26,22 @@ public class WeatherContract {
     // At least, let's hope not. Don't be that dev, reader. Don't be that dev.
     public static final String PATH_WEATHER = "weather";
     public static final String PATH_LOCATION = "location";
+
+    /**
+     * Converts a dateText to a long Unix time representation
+     * @param dateText the input date string
+     * @return the Date object
+     */
+    public static Date getDateFromDb(String dateText) {
+        SimpleDateFormat dbDateFormat = new SimpleDateFormat(DATE_FORMAT);
+        try {
+            return dbDateFormat.parse(dateText);
+        }
+         catch (java.text.ParseException e) {
+            e.printStackTrace();
+             return null;
+        }
+    }
 
     /* Inner class that defines the table contents of the location table */
     public static final class LocationEntry implements BaseColumns {
