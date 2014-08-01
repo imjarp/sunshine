@@ -4,6 +4,7 @@ package com.example.jarp.sunshine;
  * Created by JARP on 17/07/2014.
  */
 
+import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
@@ -48,6 +49,10 @@ public  class ForecastFragment extends Fragment implements LoaderManager.LoaderC
     private String mLocation;
 
 
+    public interface Callback{
+        public void onItemSelected(String date);
+    }
+
 
     private final static int FORECAST_LOADER=0;
     // For the forecast view we're showing only a small subset of the stored data.
@@ -87,6 +92,13 @@ public  class ForecastFragment extends Fragment implements LoaderManager.LoaderC
     }
 
     @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+
+
+    }
+
+    @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
@@ -120,9 +132,10 @@ public  class ForecastFragment extends Fragment implements LoaderManager.LoaderC
 
                 Cursor cursor = mForecastAdapter.getCursor();
                 if (cursor != null && cursor.moveToPosition(position)) {
-                    Intent intent = new Intent(getActivity(), DetailActivity.class)
+                    ((Callback) getActivity()).onItemSelected(cursor.getString(COL_WEATHER_DATE));
+                    /*Intent intent = new Intent(getActivity(), DetailActivity.class)
                             .putExtra(DetailActivity.DATE_KEY, cursor.getString(COL_WEATHER_DATE));
-                    startActivity(intent);
+                    startActivity(intent);*/
                 }
             }
         });
