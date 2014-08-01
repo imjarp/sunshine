@@ -4,6 +4,7 @@ package com.example.jarp.sunshine;
  * Created by JARP on 21/07/2014.
  */
 
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.ListPreference;
@@ -86,5 +87,15 @@ public class SettingsActivity extends PreferenceActivity
             preference.setSummary(stringValue);
         }
         return true;
+    }
+
+    /* Returns true if metric unit should be used, or false if
+            * imperial units should be used.
+    */
+    public static boolean isMetric(Context context) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        return prefs.getString(context.getString(R.string.pref_units_key),
+                context.getString(R.string.pref_units_metric))
+                .equals(context.getString(R.string.pref_units_metric));
     }
 }
