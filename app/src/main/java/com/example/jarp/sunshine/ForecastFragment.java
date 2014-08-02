@@ -5,7 +5,6 @@ package com.example.jarp.sunshine;
  */
 
 import android.app.Activity;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
@@ -15,7 +14,6 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
-import android.support.v4.widget.SimpleCursorAdapter;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -23,10 +21,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.SimpleAdapter;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.jarp.sunshine.data.WeatherContract;
@@ -47,7 +42,10 @@ import java.util.List;
 public  class ForecastFragment extends Fragment implements LoaderManager.LoaderCallbacks<Cursor>{
 
     private String mLocation;
-
+    private final String SELECTED_KEY ="LIST_POSITION";
+    private int mPosition = ListView.INVALID_POSITION;
+    ListView mListForeCast;
+    private boolean mUseTodayLayout;
 
     public interface Callback{
         public void onItemSelected(String date);
@@ -106,7 +104,9 @@ public  class ForecastFragment extends Fragment implements LoaderManager.LoaderC
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+                             final Bundle savedInstanceState) {
+
+        mForecastAdapter  = new ForecastAdapter(getActivity(),null,0);
         View rootView = inflater.inflate(R.layout.fragment_my, container, false);
 
         String [] forecastDay = new String[]{"Today-Sunny-88/63","Tomorrow-Foggy-88/63","Today-Sunny-88/63","Tomorrow-Foggy-88/63","Today-Sunny-88/63","Tomorrow-Foggy-88/63","Today-Sunny-88/63","Tomorrow-Foggy-88/63"};
@@ -118,11 +118,10 @@ public  class ForecastFragment extends Fragment implements LoaderManager.LoaderC
         // Loader and use it to populate the ListView it's attached to.
 
 
-        mForecastAdapter  = new ForecastAdapter(getActivity(),null,0);
 
+        mForecastAdapter.setUseTodayLayout(mUseTodayLayout);
 
-
-        ListView mListForeCast = (ListView) rootView.findViewById(R.id.listview_forecast);
+        mListForeCast = (ListView) rootView.findViewById(R.id.listview_forecast);
 
         mListForeCast.setAdapter(mForecastAdapter);
 
@@ -133,13 +132,27 @@ public  class ForecastFragment extends Fragment implements LoaderManager.LoaderC
                 Cursor cursor = mForecastAdapter.getCursor();
                 if (cursor != null && cursor.moveToPosition(position)) {
                     ((Callback) getActivity()).onItemSelected(cursor.getString(COL_WEATHER_DATE));
+
                     /*Intent intent = new Intent(getActivity(), DetailActivity.class)
                             .putExtra(DetailActivity.DATE_KEY, cursor.getString(COL_WEATHER_DATE));
                     startActivity(intent);*/
                 }
+                mPosition = position;
             }
         });
 
+        // If there's instance state, mine it for useful information.
+        // The end-goal here is that the user never knows that turning their device sideways
+        // does crazy lifecycle related things. It should feel like some stuff stretched out,
+        // or magically appeared to take advantage of room, but data or place in the app was never
+        // actually *lost*.
+        if (savedInstanceState != null && savedInstanceState.containsKey(SELECTED_KEY)) {
+            // The listview probably hasn't even been populated yet. Actually perform the
+            // swapout in onLoadFinished.
+            mPosition = savedInstanceState.getInt(SELECTED_KEY);
+        }
+
+        mForecastAdapter.setUseTodayLayout(mUseTodayLayout);
         return rootView;
     }
 
@@ -160,6 +173,14 @@ public  class ForecastFragment extends Fragment implements LoaderManager.LoaderC
         super.onResume();
         if (mLocation != null && !mLocation.equals(Utility.getPreferredLocation(getActivity()))) {
             getLoaderManager().restartLoader(FORECAST_LOADER, null, this);
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        if (mPosition != ListView.INVALID_POSITION) {
+            outState.putInt(SELECTED_KEY, mPosition);
         }
     }
 
@@ -312,12 +333,24 @@ public  class ForecastFragment extends Fragment implements LoaderManager.LoaderC
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
+        if (mPosition != ListView.INVALID_POSITION) {
+            // If we don't need to restart the loader, and there's a desired position to restore
+            // to, do so now.
+            mListForeCast.smoothScrollToPosition(mPosition);
+        }
         mForecastAdapter.swapCursor(data);
     }
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
         mForecastAdapter.swapCursor(null);
+    }
+
+    public void setUseTodayLayout(boolean useTodayLayout) {
+        mUseTodayLayout = useTodayLayout;
+        if (mForecastAdapter != null) {
+            mForecastAdapter.setUseTodayLayout(mUseTodayLayout);
+        }
     }
 
 }

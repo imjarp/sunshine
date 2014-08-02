@@ -40,6 +40,8 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
 
     public static final String LOCATION_KEY = "forecast_location";
 
+    private static final String FORECAST_KEY = "forecast";
+
     private String mForecastStr;
     private String mLocation;
 
@@ -239,6 +241,7 @@ public class DetailFragment extends Fragment implements LoaderManager.LoaderCall
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
+        outState.putString(FORECAST_KEY, mForecastStr);
         outState.putString(LOCATION_KEY, mLocation);
         super.onSaveInstanceState(outState);
     }

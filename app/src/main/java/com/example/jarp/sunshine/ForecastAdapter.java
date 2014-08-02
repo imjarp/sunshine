@@ -17,18 +17,33 @@ public class ForecastAdapter extends CursorAdapter {
     private final int VIEW_TYPE_TODAY=0;
     private final int VIEW_TYPE_FUTURE_DAY=1;
 
+    private boolean mUseTodayLayout;
+
     public ForecastAdapter(Context context, Cursor c, int flags) {
         super(context, c, flags);
+    }
+
+    public void setUseTodayLayout (boolean useTodayLayout)
+    {
+        mUseTodayLayout=useTodayLayout;
     }
 
     @Override
     public View newView(Context context, Cursor cursor, ViewGroup parent) {
 
         int viewType = getItemViewType(cursor.getPosition());
-        int layoutId = R.layout.list_item_forecast;
+        int layoutId = -1;
+        switch (viewType) {
+            case VIEW_TYPE_TODAY: {
+                layoutId = R.layout.list_item_forecast_today;
+                break;
+            }
+            case VIEW_TYPE_FUTURE_DAY: {
+                layoutId = R.layout.list_item_forecast;
+                break;
+            }
+        }
 
-        if(viewType==VIEW_TYPE_TODAY)
-            layoutId=R.layout.list_item_forecast_today;
 
         View view = LayoutInflater.from(context).inflate(layoutId, parent, false);
 
@@ -75,6 +90,7 @@ public class ForecastAdapter extends CursorAdapter {
         // Read weather forecast from cursor
         String description = cursor.getString(ForecastFragment.COL_WEATHER_DESC);
 
+        viewHolder.iconView.setContentDescription(description);
         // Find TextView and set weather forecast on it
         //TextView descriptionView = (TextView) view.findViewById(R.id.list_item_forecast_textview);
 
@@ -115,7 +131,7 @@ public class ForecastAdapter extends CursorAdapter {
         {
             iconView= (ImageView) view.findViewById(R.id.list_item_icon);
             dateView = (TextView) view.findViewById(R.id.list_item_date_textview);
-            descriptionView = (TextView) view.findViewById(R.id.list_item_date_textview);
+            descriptionView = (TextView) view.findViewById(R.id.list_item_forecast_textview);
             highTempView = (TextView) view.findViewById(R.id.list_item_high_textview);
             lowTempView = (TextView) view.findViewById(R.id.list_item_low_textview);
         }
