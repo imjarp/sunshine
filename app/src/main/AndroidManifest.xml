@@ -38,6 +38,8 @@
         <service android:name=".service.SunshineService" android:exported="false">
 
         </service>
+
+        <receiver android:name=".service.SunshineService$AlarmReceiver"></receiver>
     </application>
 
 </manifest>

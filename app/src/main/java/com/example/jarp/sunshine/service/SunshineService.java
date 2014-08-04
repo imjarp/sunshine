@@ -1,6 +1,7 @@
 package com.example.jarp.sunshine.service;
 
 import android.app.IntentService;
+import android.content.BroadcastReceiver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
@@ -12,6 +13,7 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.example.jarp.sunshine.R;
+import com.example.jarp.sunshine.Utility;
 import com.example.jarp.sunshine.data.WeatherContract;
 
 import org.json.JSONArray;
@@ -358,6 +360,17 @@ public class SunshineService extends IntentService {
 
         String highLowStr = roundedHigh + "/" + roundedLow;
         return highLowStr;
+    }
+
+    static public class AlarmReceiver extends BroadcastReceiver
+    {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Intent sunshineService = new Intent(context,SunshineService.class);
+            sunshineService.putExtra(SunshineService.LOCATION_QUERY_EXTRA, intent.getStringExtra(LOCATION_QUERY_EXTRA));
+            context.startService(sunshineService);
+
+        }
     }
 
 
