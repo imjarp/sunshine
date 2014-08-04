@@ -5,6 +5,8 @@ package com.example.jarp.sunshine;
  */
 
 import android.app.Activity;
+import android.app.IntentService;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
@@ -25,6 +27,7 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.example.jarp.sunshine.data.WeatherContract;
+import com.example.jarp.sunshine.service.SunshineService;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -197,6 +200,8 @@ public  class ForecastFragment extends Fragment implements LoaderManager.LoaderC
         {
             case R.id.action_refresh:
                 Toast.makeText(getActivity(),"RefreshAction",Toast.LENGTH_LONG).show();
+
+
                 updateWeather();
             default:
         }
@@ -207,8 +212,12 @@ public  class ForecastFragment extends Fragment implements LoaderManager.LoaderC
 
     private void updateWeather() {
 
-        String location = Utility.getPreferredLocation(getActivity());
-        new FetchWeatherTask(getActivity()).execute(location);
+        //String location = Utility.getPreferredLocation(getActivity());
+        //new FetchWeatherTask(getActivity()).execute(location);
+
+        Intent sunshineService = new Intent(getActivity(),SunshineService.class);
+        sunshineService.putExtra(SunshineService.LOCATION_QUERY_EXTRA,Utility.getPreferredLocation(getActivity()));
+        getActivity().startService(sunshineService);
     }
 
 

@@ -35,6 +35,9 @@
         <provider
             android:authorities="com.example.jarp.sunshine"
             android:name=".data.WeatherProvider"></provider>
+        <service android:name=".service.SunshineService" android:exported="false">
+
+        </service>
     </application>
 
 </manifest>
